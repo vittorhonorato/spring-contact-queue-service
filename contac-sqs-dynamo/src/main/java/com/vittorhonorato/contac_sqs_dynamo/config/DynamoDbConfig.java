@@ -1,17 +1,21 @@
 package com.vittorhonorato.contac_sqs_dynamo.config;
 
+import com.vittorhonorato.contac_sqs_dynamo.entity.ContactEntity;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
+import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.sqs.SqsAsyncClient;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 import java.net.URI;
 
 @Configuration
-public class SqsConfig {
+public class DynamoDbConfig {
 
     @Value("${spring.cloud.aws.endpoint}")
     private String uri;
@@ -26,8 +30,8 @@ public class SqsConfig {
     private String secretAccessKey;
 
     @Bean
-    public SqsAsyncClient sqsAsyncClient() {
-        return SqsAsyncClient.builder()
+    public DynamoDbClient dynamoDbClient() {
+        return DynamoDbClient.builder()
                 .endpointOverride(URI.create(uri))
                 .region(Region.of(region))
                 .credentialsProvider(
@@ -36,5 +40,17 @@ public class SqsConfig {
                         )
                 )
                 .build();
+    }
+
+    @Bean
+    public DynamoDbEnhancedClient dynamoDbEnhancedClient(DynamoDbClient dynamoDbClient) {
+        return DynamoDbEnhancedClient.builder()
+                .dynamoDbClient(dynamoDbClient)
+                .build();
+    }
+
+    @Bean
+    public DynamoDbTable<ContactEntity> taskEntityDynamoDbTable(DynamoDbEnhancedClient enhancedClient) {
+        return enhancedClient.table("contact_messages", TableSchema.fromBean(ContactEntity.class));
     }
 }

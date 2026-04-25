@@ -1,0 +1,71 @@
+package com.vittorhonorato.contac_sqs_dynamo.service.impl;
+
+import com.vittorhonorato.contac_sqs_dynamo.controller.dto.request.ContactRequestDTO;
+import com.vittorhonorato.contac_sqs_dynamo.controller.dto.response.ContactDetailsResponseDTO;
+import com.vittorhonorato.contac_sqs_dynamo.controller.dto.response.ContactResponseDTO;
+import com.vittorhonorato.contac_sqs_dynamo.entity.ContactEntity;
+import com.vittorhonorato.contac_sqs_dynamo.mapper.ContactMapper;
+import com.vittorhonorato.contac_sqs_dynamo.producer.ContactProducer;
+import com.vittorhonorato.contac_sqs_dynamo.producer.impl.ContactProducerImpl;
+import com.vittorhonorato.contac_sqs_dynamo.queue.dto.ContactQueueMessage;
+import com.vittorhonorato.contac_sqs_dynamo.repository.ContactRepository;
+import com.vittorhonorato.contac_sqs_dynamo.service.ContactService;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+public class ContactServiceImpl implements ContactService {
+
+    private final ContactRepository contactRepository;
+    private final ContactProducer contactProducer;
+    private final ContactMapper contactMapper;
+
+    public ContactServiceImpl(ContactRepository contactRepository, ContactProducer contactProducer, ContactMapper contactMapper) {
+        this.contactRepository = contactRepository;
+        this.contactProducer = contactProducer;
+        this.contactMapper = contactMapper;
+    }
+
+    @Override
+    public ContactResponseDTO create(ContactRequestDTO contactRequestDTO) {
+
+        ContactEntity entity = contactMapper.toEntity(contactRequestDTO);
+        entity.setId(UUID.randomUUID().toString());
+        entity.setStatus("PENDING");
+        entity.setCreatedAt(LocalDateTime.now());
+        contactRepository.save(entity);
+
+        contactProducer.send(new ContactQueueMessage(entity.getId()));
+
+        ContactResponseDTO response = contactMapper.toDto(entity);
+        return response;
+    }
+
+    @Override
+    public ContactDetailsResponseDTO findById(String id) {
+
+        ContactEntity entity = contactRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Contato nao encontrado"));
+
+        return contactMapper.toDtoDetails(entity);
+    }
+
+    @Override
+    public ContactDetailsResponseDTO findByEmail(String email) {
+        ContactEntity entity = contactRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Contato nao encontrado"));
+
+        return contactMapper.toDtoDetails(entity);
+    }
+
+    @Override
+    public List<ContactDetailsResponseDTO> findAll() {
+        return contactRepository.findAll()
+                .stream()
+                .map(contactMapper::toDtoDetails)
+                .toList();
+    }
+}
