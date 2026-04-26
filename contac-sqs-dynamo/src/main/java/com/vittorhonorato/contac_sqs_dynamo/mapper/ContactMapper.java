@@ -6,7 +6,6 @@ import com.vittorhonorato.contac_sqs_dynamo.controller.dto.response.ContactRespo
 import com.vittorhonorato.contac_sqs_dynamo.entity.ContactEntity;
 import org.mapstruct.Mapper;
 
-import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface ContactMapper {

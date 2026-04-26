@@ -6,15 +6,18 @@ import com.vittorhonorato.contac_sqs_dynamo.controller.dto.response.ContactRespo
 import com.vittorhonorato.contac_sqs_dynamo.entity.ContactEntity;
 import com.vittorhonorato.contac_sqs_dynamo.mapper.ContactMapper;
 import com.vittorhonorato.contac_sqs_dynamo.producer.ContactProducer;
-import com.vittorhonorato.contac_sqs_dynamo.producer.impl.ContactProducerImpl;
 import com.vittorhonorato.contac_sqs_dynamo.queue.dto.ContactQueueMessage;
 import com.vittorhonorato.contac_sqs_dynamo.repository.ContactRepository;
 import com.vittorhonorato.contac_sqs_dynamo.service.ContactService;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class ContactServiceImpl implements ContactService {
@@ -29,6 +32,7 @@ public class ContactServiceImpl implements ContactService {
         this.contactMapper = contactMapper;
     }
 
+    @CacheEvict(value = "contactsAll", key = "'all'")
     @Override
     public ContactResponseDTO create(ContactRequestDTO contactRequestDTO) {
 
@@ -44,6 +48,7 @@ public class ContactServiceImpl implements ContactService {
         return response;
     }
 
+    @Cacheable(value = "contacts", key = "#id")
     @Override
     public ContactDetailsResponseDTO findById(String id) {
 
@@ -53,6 +58,7 @@ public class ContactServiceImpl implements ContactService {
         return contactMapper.toDtoDetails(entity);
     }
 
+    @Cacheable(value = "contactsByEmail", key = "#email")
     @Override
     public ContactDetailsResponseDTO findByEmail(String email) {
         ContactEntity entity = contactRepository.findByEmail(email)
@@ -61,11 +67,12 @@ public class ContactServiceImpl implements ContactService {
         return contactMapper.toDtoDetails(entity);
     }
 
+    @Cacheable(value = "contactsAll", key = "'all'")
     @Override
     public List<ContactDetailsResponseDTO> findAll() {
         return contactRepository.findAll()
                 .stream()
                 .map(contactMapper::toDtoDetails)
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 }
