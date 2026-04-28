@@ -10,7 +10,7 @@ O fluxo principal é:
 
 ## Arquitetura
 
-<img width="1122" height="1402" alt="Image" src="https://github.com/user-attachments/assets/0112e8ea-1d5e-434a-813b-2fbf810a4394" />
+<img width="1448" height="1086" alt="Image" src="https://github.com/user-attachments/assets/ed1cb89c-f710-416e-8c6d-de4c8b13a7e6" />
 
 
 ## Stack técnica
