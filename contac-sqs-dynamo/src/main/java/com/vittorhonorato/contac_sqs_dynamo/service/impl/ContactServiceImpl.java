@@ -4,6 +4,7 @@ import com.vittorhonorato.contac_sqs_dynamo.controller.dto.request.ContactReques
 import com.vittorhonorato.contac_sqs_dynamo.controller.dto.response.ContactDetailsResponseDTO;
 import com.vittorhonorato.contac_sqs_dynamo.controller.dto.response.ContactResponseDTO;
 import com.vittorhonorato.contac_sqs_dynamo.entity.ContactEntity;
+import com.vittorhonorato.contac_sqs_dynamo.entity.ContactStatus;
 import com.vittorhonorato.contac_sqs_dynamo.mapper.ContactMapper;
 import com.vittorhonorato.contac_sqs_dynamo.producer.ContactProducer;
 import com.vittorhonorato.contac_sqs_dynamo.queue.dto.ContactQueueMessage;
@@ -38,8 +39,10 @@ public class ContactServiceImpl implements ContactService {
 
         ContactEntity entity = contactMapper.toEntity(contactRequestDTO);
         entity.setId(UUID.randomUUID().toString());
-        entity.setStatus("PENDING");
+        entity.setStatus(ContactStatus.PENDING.name());
         entity.setCreatedAt(LocalDateTime.now());
+        entity.setSentAt(null);
+        entity.setErrorMessage(null);
         contactRepository.save(entity);
 
         contactProducer.send(new ContactQueueMessage(entity.getId()));

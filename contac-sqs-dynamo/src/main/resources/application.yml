@@ -4,20 +4,20 @@ spring:
 
   cloud:
     aws:
-      endpoint: http://localhost:4566
+      endpoint: ${AWS_ENDPOINT:http://localhost:4566}
       region:
-        static: us-east-1
+        static: ${AWS_REGION:us-east-1}
       credentials:
-        access-key: test
-        secret-key: test
+        access-key: ${AWS_ACCESS_KEY_ID:test}
+        secret-key: ${AWS_SECRET_ACCESS_KEY:test}
       sqs:
-        endpoint: https://localhost.localstack.cloud:4566/000000000000/sqs-email
+        endpoint: ${AWS_SQS_ENDPOINT:http://localhost:4566}
 
   mail:
     host: sandbox.smtp.mailtrap.io
     port: 587
-    username: 4a4049dbda2b6f
-    password: ad8398b66bbbe6
+    username: 1190f941b9011a
+    password: 8534ca630aa42d
     properties:
       mail:
         smtp:
@@ -27,10 +27,18 @@ spring:
 
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  docker:
+    compose:
+      enabled: ${SPRING_DOCKER_COMPOSE_ENABLED:true}
+      lifecycle-management: start_and_stop
+      readiness:
+        timeout: 2m
 
 app:
   aws:
     sqs:
-      email-queue: sqs-email
+      email-queue: ${APP_EMAIL_QUEUE:sqs-email}
+      email-dlq: ${APP_EMAIL_DLQ_QUEUE:sqs-email-dlq}

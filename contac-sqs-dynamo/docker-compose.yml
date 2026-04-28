@@ -1,0 +1,41 @@
+services:
+  localstack:
+    image: localstack/localstack:3.8
+    ports:
+      - "${LOCALSTACK_PORT:-4566}:4566"
+    environment:
+      SERVICES: sqs,dynamodb
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      DEBUG: "0"
+      APP_EMAIL_QUEUE: ${APP_EMAIL_QUEUE:-sqs-email}
+      APP_EMAIL_DLQ_QUEUE: ${APP_EMAIL_DLQ_QUEUE:-sqs-email-dlq}
+      APP_DYNAMO_TABLE: ${APP_DYNAMO_TABLE:-contact_messages}
+      APP_SQS_MAX_RECEIVE_COUNT: ${APP_SQS_MAX_RECEIVE_COUNT:-5}
+    volumes:
+      - ./localstack/init:/etc/localstack/init/ready.d
+      - localstack-data:/var/lib/localstack
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "awslocal sqs get-queue-url --queue-name ${APP_EMAIL_QUEUE:-sqs-email} >/dev/null 2>&1 && awslocal sqs get-queue-url --queue-name ${APP_EMAIL_DLQ_QUEUE:-sqs-email-dlq} >/dev/null 2>&1 && awslocal dynamodb describe-table --table-name ${APP_DYNAMO_TABLE:-contact_messages} >/dev/null 2>&1",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  localstack-data:
